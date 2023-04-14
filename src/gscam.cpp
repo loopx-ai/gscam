@@ -83,6 +83,7 @@ namespace gscam {
     // Get the image encoding
     nh_private_.param("image_encoding", image_encoding_, sensor_msgs::image_encodings::RGB8);
     if (image_encoding_ != sensor_msgs::image_encodings::RGB8 &&
+        image_encoding_ != sensor_msgs::image_encodings::BGR8 &&
         image_encoding_ != sensor_msgs::image_encodings::MONO8 && 
         image_encoding_ != "jpeg") {
       ROS_FATAL_STREAM("Unsupported image encoding: " + image_encoding_);
@@ -135,6 +136,10 @@ namespace gscam {
         caps = gst_caps_new_simple( "video/x-raw", 
             "format", G_TYPE_STRING, "RGB",
             NULL); 
+    } else if (image_encoding_ == sensor_msgs::image_encodings::BGR8) {
+        caps = gst_caps_new_simple( "video/x-raw", 
+            "format", G_TYPE_STRING, "BGR",
+            NULL); 
     } else if (image_encoding_ == sensor_msgs::image_encodings::MONO8) {
         caps = gst_caps_new_simple( "video/x-raw", 
             "format", G_TYPE_STRING, "GRAY8",
@@ -145,6 +150,8 @@ namespace gscam {
 #else
     if (image_encoding_ == sensor_msgs::image_encodings::RGB8) {
         caps = gst_caps_new_simple( "video/x-raw-rgb", NULL,NULL); 
+    } else if (image_encoding_ == sensor_msgs::image_encodings::BGR8) {
+        caps = gst_caps_new_simple("video/x-raw-bgr", NULL, NULL);
     } else if (image_encoding_ == sensor_msgs::image_encodings::MONO8) {
         caps = gst_caps_new_simple("video/x-raw-gray", NULL, NULL);
     } else if (image_encoding_ == "jpeg") {
@@ -295,7 +302,7 @@ namespace gscam {
       GstFormat fmt = GST_FORMAT_TIME;
       gint64 current = -1;
 
-       Query the current position of the stream
+      // Query the current position of the stream
       if (gst_element_query_position(pipeline_, &fmt, &current)) {
           ROS_INFO_STREAM("Position "<<current);
       }
@@ -347,7 +354,7 @@ namespace gscam {
       } else {
           // Complain if the returned buffer is smaller than we expect
           const unsigned int expected_frame_size =
-              image_encoding_ == sensor_msgs::image_encodings::RGB8
+              (image_encoding_ == sensor_msgs::image_encodings::RGB8) || (image_encoding_ == sensor_msgs::image_encodings::BGR8)
               ? width_ * height_ * 3
               : width_ * height_;
 
@@ -372,7 +379,7 @@ namespace gscam {
           // Copy only the data we received
           // Since we're publishing shared pointers, we need to copy the image so
           // we can free the buffer allocated by gstreamer
-          if (image_encoding_ == sensor_msgs::image_encodings::RGB8) {
+          if ((image_encoding_ == sensor_msgs::image_encodings::RGB8) || (image_encoding_ == sensor_msgs::image_encodings::BGR8)) {
               img->step = width_ * 3;
           } else {
               img->step = width_;

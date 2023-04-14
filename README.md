@@ -76,6 +76,8 @@ This can be run as both a node and a nodelet.
 * `~frame_id`: The [TF](http://www.ros.org/wiki/tf) frame ID.
 * `~reopen_on_eof`: Re-open the stream if it ends (EOF).
 * `~sync_sink`: Synchronize the app sink (sometimes setting this to `false` can resolve problems with sub-par framerates).
+* `~image_encoding`: Encoding of the stream. Can be {`rgb8`, `bgr8`, `mono8`}. Defaults to `rgb8`. (Verify with: `$ rostopic echo /camera/image_raw | grep encoding`)
+
 
 C++ API (unstable)
 ------------------

@@ -365,7 +365,8 @@ namespace gscam {
           }
 
           // Construct Image message
-          sensor_msgs::ImagePtr img(new sensor_msgs::Image());
+          // sensor_msgs::ImagePtr img(new sensor_msgs::Image());
+          sensor_msgs::ImagePtr img = boost::make_shared<sensor_msgs::Image>();
 
           img->header = cinfo->header;
 
@@ -379,15 +380,18 @@ namespace gscam {
           // Copy only the data we received
           // Since we're publishing shared pointers, we need to copy the image so
           // we can free the buffer allocated by gstreamer
-          if ((image_encoding_ == sensor_msgs::image_encodings::RGB8) || (image_encoding_ == sensor_msgs::image_encodings::BGR8)) {
-              img->step = width_ * 3;
-          } else {
-              img->step = width_;
-          }
-          std::copy(
-                  buf_data,
-                  (buf_data)+(buf_size),
-                  img->data.begin());
+          // if ((image_encoding_ == sensor_msgs::image_encodings::RGB8) || (image_encoding_ == sensor_msgs::image_encodings::BGR8)) {
+          //     img->step = width_ * 3;
+          // } else {
+          //     img->step = width_;
+          // }
+          // std::copy(
+          //         buf_data,
+          //         (buf_data)+(buf_size),
+          //         img->data.begin());
+
+          img->step = img->width * (img->encoding == sensor_msgs::image_encodings::RGB8 || img->encoding == sensor_msgs::image_encodings::BGR8 ? 3 : 1);
+          std::memcpy(&img->data[0], buf_data, buf_size);
 
           // Publish the image/info
           camera_pub_.publish(img, cinfo);

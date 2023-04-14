@@ -1,4 +1,4 @@
-GSCam [![Build Status](https://travis-ci.org/ros-drivers/gscam.svg?branch=master)](https://travis-ci.org/ros-drivers/gscam)
+GSCam
 ===========================================================================================================================
 
 This is a ROS package originally developed by the [Brown Robotics
@@ -11,48 +11,83 @@ for more ROS-like configuration and more control over the GStreamer interface.
 
 Note that this pacakge can be built both in a rosbuild and catkin workspaces.
 
-GStreamer Library Support
+
+
+## Features
+
+- [x] Convert YUV to RGB/BGR with low CPU usage (50% on ORIN AGX with 5M Camera, still room for optimization)
+- [x] Publish Camera INFO
+- [ ] Get the timestamp of the camera itself (gst can get V4L2 timestamp, but need to verify)
+- [x] Use hardware acceleration
+- [x] Support Nodelet
+- [ ] Support Resize
+
+
+
+How to use
 -------------------------
 
-gscam supports the following versions of GStreamer
-
-### 0.1.x: _Default_
-
-Install dependencies via `rosdep`.
-
-### 1.0.x: Experimental
+(Tested on ORIN AGX with Ubuntu20.04)
 
 #### Dependencies:
- 
+
 * gstreamer1.0-tools 
 * libgstreamer1.0-dev 
 * libgstreamer-plugins-base1.0-dev 
 * libgstreamer-plugins-good1.0-dev
 
-Ubuntu Install:
-
-##### 12.04
+**Ubuntu Install** (≥14.04):
 
 ```sh
-sudo add-apt-repository ppa:gstreamer-developers/ppa
-sudo apt-get install gstreamer1.0-tools libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev libgstreamer-plugins-good1.0-dev
+$ sudo apt-get install gstreamer1.0-tools libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev libgstreamer-plugins-good1.0-dev
 ```
 
-##### 14.04
+Just try to simply show the camera:
 
-```sh
-sudo apt-get install gstreamer1.0-tools libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev libgstreamer-plugins-good1.0-dev
+```shell
+$ gst-launch-1.0 v4l2src device={DEVICE} ! 'video/x-raw,format={FORMAT},width={WIDTH},height={HEIGHT},framerate={FPS}/1' ! videoconvert ! fpsdisplaysink video-sink=xvimagesink sync=false
 ```
+
+**Example**:
+
+```shell
+$ gst-launch-1.0 v4l2src device=/dev/video0 ! 'video/x-raw,format=UYVY,width=2880,height=1860,framerate=30/1' ! videoconvert ! fpsdisplaysink video-sink=xvimagesink sync=false
+```
+
+
 
 #### Usage:
-* Use the CMake flag `-DGSTREAMER_VERSION_1_x=On` when building
-* See the [Video4Linux2 launchfile example](examples/v4l.launch) for
-  an example of the differences in the GStreamer config lines
+
+1. Compile the package:
+
+   ```shell
+   $ catkin build gscam
+   ```
+
+2. Test nvv4l2camerasrc and nvvidconv (**Necessary**):
+
+   ```shell
+   $ gst-launch-1.0 nvv4l2camerasrc device={DEVICE} ! 'video/x-raw(memory:NVMM),format={FORMAT},width={WIDTH},height={HEIGHT},framerate={FPS}/1' ! nvvidconv ! video/x-raw,format=BGRx ! videoconvert ! fpsdisplaysink video-sink=xvimagesink sync=false
+   ```
+
+   If the image is **distorted**, please execute `$ v4l2-ctl -d /dev/video0 --set-ctrl preferred_stride={STRIDE}`, The `{STRIDE}` parameter is calculated according to `cell({WIDTH} * 2/256) * 256`; For example `{WIDTH}=2880`, then the calculation process is: `cell(2880 * 2/256) * 256 = 23 * 256=5888`. More information please see this [issue](https://forums.developer.nvidia.com/t/500w-camera-problem-failed-to-get-image/195491/17).
+
+ 3. See [GMSL sample launch file](launch/gmsl.launch) and run with:
+
+    ```shell
+    $ roslaunch gscam gmsl.launch
+    ```
+
+
 
 #### Notes:
-* This has been tested with `v4l2src`
 
-ROS API (stable)
+* Currently testing a 5M Camera on ORIN AGX: it occupies about 46% of the CPU single core when it is unloaded, about 70% of the CPU single core when reading image_raw, and about 150% of the CPU when reading compressed.
+* Due to the limited output format supported by [nvvidconv](https://docs.nvidia.com/metropolis/deepstream/dev-guide/text/DS_plugin_gst-nvvideoconvert.html), the final conversion to RGB8 and BGR8 still runs on the CPU.
+
+
+
+ROS API
 ----------------
 
 ### gscam
@@ -78,12 +113,6 @@ This can be run as both a node and a nodelet.
 * `~sync_sink`: Synchronize the app sink (sometimes setting this to `false` can resolve problems with sub-par framerates).
 * `~image_encoding`: Encoding of the stream. Can be {`rgb8`, `bgr8`, `mono8`}. Defaults to `rgb8`. (Verify with: `$ rostopic echo /camera/image_raw | grep encoding`)
 
-
-C++ API (unstable)
-------------------
-
-The gscam c++ library can be used, but it is not guaranteed to be stable. 
-
 Examples
 --------
 
@@ -99,3 +128,4 @@ are examples for:
 * [DeckLink](examples/decklink.launch):
   [BlackMagic](http://www.blackmagicdesign.com/products/decklink/models)
   DeckLink SDI capture cards (note: this requires the `gst-plugins-bad` plugins)
+

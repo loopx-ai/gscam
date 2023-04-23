@@ -35,11 +35,12 @@ How to use
 * libgstreamer1.0-dev 
 * libgstreamer-plugins-base1.0-dev 
 * libgstreamer-plugins-good1.0-dev
+* v4l-utils
 
 **Ubuntu Install** (≥14.04):
 
 ```sh
-$ sudo apt-get install gstreamer1.0-tools libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev libgstreamer-plugins-good1.0-dev
+$ sudo apt-get install gstreamer1.0-tools libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev libgstreamer-plugins-good1.0-dev v4l-utils
 ```
 
 Just try to simply show the camera:

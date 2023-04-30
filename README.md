@@ -20,7 +20,7 @@ Note that this pacakge can be built both in a rosbuild and catkin workspaces.
 - [ ] Get the timestamp of the camera itself (gst can get V4L2 timestamp, but need to verify)
 - [x] Use hardware acceleration
 - [x] Support Nodelet
-- [ ] Support Resize
+- [x] Support Resize
 
 
 

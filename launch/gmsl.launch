@@ -11,11 +11,14 @@
 
   <!-- Output Config -->
   <arg name="frame_id" default="/$(arg camera_name)_link" />
-  <arg name="image_encoding" default="rgb8" doc="Encoding of the stream. Can be {`rgb8`, `bgr8`, `mono8`}"/>
+  <arg name="image_encoding" default="bgr8" doc="Encoding of the stream. Can be {`rgb8`, `bgr8`, `mono8`}"/>
+  <arg name="output_width" default="1920" />                        <!-- Output Image Width -->
+  <arg name="output_height" default="1080" />                       <!-- Output Image Height -->
 
   <!-- Define the GSCAM pipeline -->
   <env name="GSCAM_CONFIG" value="nvv4l2camerasrc device=$(arg device) ! video/x-raw(memory:NVMM),
     width=(int)$(arg width), height=(int)$(arg height), format=(string)$(arg format), framerate=(fraction)$(arg fps)/1 ! 
+    nvvidconv ! video/x-raw(memory:NVMM),width=(int)$(arg output_width), height=(int)$(arg output_height) !
     nvvidconv flip-method=0 ! video/x-raw, format=(string)BGRx ! videoconvert"
   />
 
@@ -25,7 +28,7 @@
     <param name="use_gst_timestamps" value="false"/>
     <param name="image_encoding" value="$(arg image_encoding)"/>
     <param name="frame_id" value="$(arg frame_id)" />
-    <param name="sync_sink" value="false"/>
+    <param name="sync_sink" value="true"/>
   </node>
 
 </launch>

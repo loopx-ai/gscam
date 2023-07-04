@@ -21,6 +21,7 @@ Note that this pacakge can be built both in a rosbuild and catkin workspaces.
 - [x] Use hardware acceleration
 - [x] Support Nodelet
 - [x] Support Resize
+- [x] Support RTSP Camera
 
 
 
@@ -35,24 +36,37 @@ How to use
 * libgstreamer1.0-dev 
 * libgstreamer-plugins-base1.0-dev 
 * libgstreamer-plugins-good1.0-dev
+* gstreamer1.0-plugins-bad
 * v4l-utils
 
 **Ubuntu Install** (≥14.04):
 
 ```sh
-$ sudo apt-get install gstreamer1.0-tools libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev libgstreamer-plugins-good1.0-dev v4l-utils
+$ sudo apt-get install gstreamer1.0-tools libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev libgstreamer-plugins-good1.0-dev gstreamer1.0-plugins-bad v4l-utils
 ```
 
-Just try to simply show the camera:
+Just try to simply show the GMSL camera:
 
 ```shell
 $ gst-launch-1.0 v4l2src device={DEVICE} ! 'video/x-raw,format={FORMAT},width={WIDTH},height={HEIGHT},framerate={FPS}/1' ! videoconvert ! fpsdisplaysink video-sink=xvimagesink sync=false
 ```
 
+Or RTSP camera:
+
+```shell
+$ gst-launch-1.0 rtspsrc location=rtsp://{user}:{password}@{url} latency=0 ! rtph264depay ! h264parse ! avdec_h264 ! autovideoconvert ! autovideosink sync=false
+```
+
+
+
 **Example**:
 
 ```shell
+# GMSL Camera
 $ gst-launch-1.0 v4l2src device=/dev/video0 ! 'video/x-raw,format=UYVY,width=2880,height=1860,framerate=30/1' ! videoconvert ! fpsdisplaysink video-sink=xvimagesink sync=false
+
+# RTSP Camera
+$ gst-launch-1.0 rtspsrc location=rtsp://admin:loop1234@10.0.0.156:554/Streaming/Channels/101 latency=0 ! rtph264depay ! h264parse ! avdec_h264 ! videoconvert ! fpsdisplaysink video-sink=xvimagesink sync=false
 ```
 
 
@@ -113,6 +127,14 @@ This can be run as both a node and a nodelet.
 * `~reopen_on_eof`: Re-open the stream if it ends (EOF).
 * `~sync_sink`: Synchronize the app sink (sometimes setting this to `false` can resolve problems with sub-par framerates).
 * `~image_encoding`: Encoding of the stream. Can be {`rgb8`, `bgr8`, `mono8`}. Defaults to `rgb8`. (Verify with: `$ rostopic echo /camera/image_raw | grep encoding`)
+
+
+
+## Troubleshooting
+
+**WARNING: erroneous pipeline: no element "h264parse"**: `$ sudo apt-get install gstreamer1.0-plugins-bad`
+
+
 
 Examples
 --------
